@@ -15,7 +15,7 @@ Based on the neo pixels chips WS2812 5050, I purchased 8m of LED strips with 144
 #### Features: ####
 
 - Displays actual time (hh:mm:ss)
-- Internal RTC to keep time and updates from NTP once every minute
+- Internal RTC to keep time and updates from NTP once every hour or if time is lost (reboot)
 
 #### Credits
 - Neo7segment.h:   [UnexpectedMaker](https://github.com/UnexpectedMaker/Neo7Segment)
