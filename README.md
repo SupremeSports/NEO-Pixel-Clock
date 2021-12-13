@@ -12,6 +12,7 @@ Based on the neo pixels chips WS2812 5050, I purchased 8m of LED strips with 144
 ![alt text](images/Rainbow_H.jpg "Horizontal Colors")
 
 Web server available on `http://do2_neoclock/`
+
 ![alt text](images/webserver.jpg "Webserver")
 
 #### Features: ####
