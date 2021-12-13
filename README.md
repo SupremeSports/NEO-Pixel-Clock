@@ -19,7 +19,7 @@ Web server available on `http://do2_neoclock/`:
 
 #### Features: ####
 
-- Displays actual time (hh:mm) and ":" is flashing every second
+- Displays actual time (hh:mm) and ":" are flashing every second
 - Internal RTC to keep time and updates from NTP once every hour or if time is lost (reboot)
 - Get time from NTP server, has a function to calculate DST
 - Webserver can be found at local IP (reported on serial bus) or by typing http://do2_neoclock/
