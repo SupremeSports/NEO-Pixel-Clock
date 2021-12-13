@@ -27,7 +27,7 @@ Web server available on `http://do2_neoclock/`:
 
 #### Credits
 - Neo7segment.h:   [UnexpectedMaker](https://github.com/UnexpectedMaker/Neo7Segment)
-The initial library neo7segment.h has been modified by me to adjust the number of pixels per segment and has now been merged to master. The original library gave the possibility to adjust the number of digits, but not the quantity of pixels per segment. Since I wanted a very large clock display (8 pixels per segment) and 4 pixels digits for the outdoor temperature/humidity and for the pool water temperature, I had to modify the library to suite my needs.
+The initial library neo7segment.h has been modified by me to adjust the number of pixels per segment and has now been merged to master. The original library gave the possibility to adjust the number of digits, but not the quantity of pixels per segment. Since I wanted a very large clock display [on another project](https://github.com/SupremeSports/HA-Domotic/tree/master/Devices/Pool%20Clock) (8 pixels per segment) and 4 pixels digits for the outdoor temperature/humidity and for the pool water temperature, I had to modify the library to suite my needs.
 
 - NTPClient.h:     [Fabrice Weinberg](https://github.com/arduino-libraries/NTPClient)
 The initial library NTPClient.h has been modified to add the following function for which a [Pull Request](https://github.com/arduino-libraries/NTPClient/pull/125) has been made by someone else
