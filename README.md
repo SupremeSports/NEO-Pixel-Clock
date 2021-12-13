@@ -1,5 +1,4 @@
 # NEO Pixel Clock
-NEO pixel clock
 
 #### Status: Completed - In Service ####
 
