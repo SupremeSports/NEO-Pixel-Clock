@@ -34,7 +34,10 @@ void updateTimeString()
 
   activeDisplay = (brightness!=0);
 
-  timeString = setTimeValues();
+  if (localTimeValid)
+    timeString = setTimeValues();
+  else
+    timeString = (Second % 2)==0 ? " . . . ." : "    ";
   setBrightnessLevel();
 
   if (brightness==0 && activeDisplay)
@@ -54,13 +57,13 @@ void setBrightnessLevel()
     brightness = 0;
   else
   {
-    brightness = map(defaultBrightness,0,100,0,255);
+    brightness = Map(defaultBrightness,0,100,0,255);
     forceON = false;
     forceOFF = false;
   }
 
   if (forceON)
-    brightness = map(defaultBrightness,0,100,0,255);
+    brightness = Map(defaultBrightness,0,100,0,255);
 
   if (forceOFF)
     brightness = 0;

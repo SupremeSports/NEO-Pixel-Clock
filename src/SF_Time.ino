@@ -8,14 +8,20 @@ void updateTime()
   ONS_10s = false;
   ONS_1m = false;
 
+  bool timeOK = true;
+
+  //if ((second() == 0 && minute() == 0 && second() != Second && minute() != Minute) || !localTimeValid)
+  //if (minute() != Minute || !localTimeValid)
   if ((minute() == 0 && minute() != Minute) || !localTimeValid)
-    getNtp();
-    
+    timeOK = getNtpTime();
+
   if (second() == Second && localTimeValid)
     return;
 
   if (minute() != Minute)
     ONS_1m = true;
+
+  bool updateONS = second() != Second;
   
   Year = year();
   Month = month();
@@ -23,18 +29,31 @@ void updateTime()
   Hour = hour();
   Minute = minute();
   Second = second();
-  DOW = weekday()-1;
+  DOW = weekday()-1; // weekday() returns (1-7) ==> (Sun-Sat)
 
-  if (abs((Year-2000) - currentYear) <= 1)
-    currentYear = Year-2000;
+  localTimeValid = (Year>2000 && Year<2100) && timeOK;
 
-  localTimeValid = ((Year-2000)==currentYear);
+  if (!upSinceONS && localTimeValid)
+  {
+    YearUp = Year;
+    MonthUp = Month;
+    DayUp = Day;
+    HourUp = Hour;
+    MinuteUp = Minute;
+    SecondUp = Second;
+    DSTUp = DST;
 
-  ONS_1s = true;
-  ONS_5s = Second%5==0;
-  ONS_10s = Second%10==0;
+    upSinceONS = true;
+  }
 
-  PRE_5s = (Second+1)%5==0 || ONS_5s; //Less than a second before next trigger
+  if (updateONS)
+  {
+    ONS_1s = true;
+    ONS_5s = Second%5==0;
+    ONS_10s = Second%10==0;
+  
+    PRE_5s = (Second+1)%5==0 || ONS_5s; //Less than a second before next trigger
+  }
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -42,54 +61,80 @@ void updateTime()
 // ----------------------------------------------------------------------------------------------------
 void initNtp()
 {
-  //NTP begin with default parameters:
-  //NTP server: 'pool.ntp.org' is used with 60 seconds update interval and no offset
-  //NTP update: 60 seconds update interval
-  //NTP offset: 0
-  
-  IPAddress serverIP;
+  // NTP begin with default parameters:
+  //   NTP server: pool.ntp.org
+  //   TimeZone: UTC
+  //   Daylight saving: off
 
-  if (serverIP.fromString(timeServer[wifiServerIndex]));
+  maxRetryNTP = 5;
+
+  NTP = ntpClient::getInstance(timeServer[wifiServerIndex], 0, false);
+  //NTP = ntpClient::getInstance(timeServerDefault, 0, false);
+  NTP->begin(); //Starts time synchronization
+  local_delay(100);
+}
+
+//2085978496 - 07/02/2036 - 06:28:16 ? Default reading, do not accept
+bool getNtpTime()
+{
+  String serverNameStr = NTP->getNtpServerName();
+  int len = serverNameStr.length()+1;
+  char serverName[len];
+  serverNameStr.toCharArray(serverName, len);
+  Sprint("Read from ");
+  Sprint(serverName);
+  Sprintln(" NTP Server");
+
+  time_t DTvalue = ntpClient::getTime();
+  if (DTvalue == 0 || DTvalue == 2085978496)
   {
-    if (strcmp(timeServer[wifiServerIndex],"pool.ntp.org")==0)
-      NTP.setPoolServerName(timeServer[wifiServerIndex]);
-    else
-      NTP.setPoolServerIP(serverIP);
+    if (--maxRetryNTP == 0)
+    {
+      if (!strcmp(timeServerDefault,serverName)==0)
+      {
+        ntpClient::getInstance(timeServerDefault, 0, false);
+        maxRetryNTP = 5;
+      }
+      else
+        while(1);
+    }
+    
+    ESP.getFreeHeap();
+    return false;
   }
 
-  NTP.begin();
-}
+  ntpClient::getInstance(timeServer[wifiServerIndex], 0, false);
+  maxRetryNTP = 5;
 
-time_t getNtp()
-{
-  Sprintln("Get NTP...");
-  wdtReset();
+  Sprint("UTC Date/Time: ");
+  Sprint(DTvalue);
+  Sprint(" - ");
+  Sprint(NTP->getDateStr(DTvalue));
+  Sprint(" - ");
+  Sprint(NTP->getTimeStr(DTvalue));
+  Sprint(" - ");
+  Sprintln(count);
 
-  NTP.update();
+  setTime(DTvalue);
+  //setTime(hour(DTvalue), minute(DTvalue), second(DTvalue), day(DTvalue), month(DTvalue), year(DTvalue));
 
-  time_t utcCalc = NTP.getEpochTime(); 
-  uint16_t dateTime[6];
-  
-  dateTime[0] = year(utcCalc);
-  dateTime[1] = month(utcCalc);
-  dateTime[2] = day(utcCalc);
-  dateTime[3] = hour(utcCalc);
-  dateTime[4] = minute(utcCalc);
-  dateTime[5] = second(utcCalc);
+  DST = isDST(day(), month(), weekday()-1);
 
-  setTime(dateTime[3], dateTime[4], dateTime[5], dateTime[2], dateTime[1], dateTime[0]);
-
-  bool DST = isDST(day(), month(), weekday()-1);
-  int timeAdjust = timeZone*3600;
-  if (DST)
-    timeAdjust = timeZoneDST*3600;
-  
+  int timeAdjust = (DST ? timeZoneDST : timeZone) * 3600;
   adjustTime(timeAdjust);
+
+  ESP.getFreeHeap();
+
+  return true;
 }
 
+/*  Those settings are for North America Eastern time
+ *  You might need to adjust formulas according to your
+ *  location and DST rules.
+ */ 
 bool isDST(int day, int month, int dow)
 {
-    //January, february, and december are not DST
+    //January, February, and December are not DST
     if (month < 3 || month > 11)
       return false;
     //April to October are in DST

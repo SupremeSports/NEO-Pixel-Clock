@@ -13,5 +13,5 @@ const char* OTApassword               = "yourPassword";
 
 const char* timeServer[ssid_qty]      = {"yourNTPservIP or name", "pool.ntp.org"}; //If you want the default, set name to "pool.ntp.org"
 
-const int timeZone                    = yourTimeZone;           //Timezone when on standard time
-const int timeZoneDST                 = yourTimeZoneDST;        //Timezone when on daylight saving time (if non, set it to the same as timeZone)
+const int timeZone                    = yourTimeZone;           //Timezone when on standard time (e.g.: -5 for US & Canada Estearn time)
+const int timeZoneDST                 = yourTimeZoneDST;        //Timezone when on daylight saving time (if none, set it to the same as timeZone) (e.g.: -4 for US & Canada Estearn time)

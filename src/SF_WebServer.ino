@@ -35,7 +35,7 @@ void runWebServer()
     local_delay(1);
   }
 
-  wdtReset();
+  //wdtReset();
    
   // Read the first line of the request
   String request = client.readStringUntil('\r');
@@ -49,18 +49,20 @@ void runWebServer()
     submit(request);
   else if (request.indexOf(CANCEL_BUTTON) != -1)
     cancel();
+  else if (request.indexOf(RESYNCH_BUTTON) != -1)
+    localTimeValid = false;
   else if (request.indexOf(RESTART_BUTTON) != -1)
   {
     client.print("<HEAD>");
     client.print("<meta http-equiv=\"refresh\" content=\"0;url=/\">");
     client.print("</head>");
-    timeDisplay.SetBrightness(map(defaultBrightness,0,100,0,255));
+    timeDisplay.SetBrightness(Map(defaultBrightness,0,100,0,255));
     timeDisplay.DisplayTextColor("BOOT", timeDisplay.Color(255, 0, 0));
     client.stop();
     while(1);
   }
 
-  wdtReset();
+  //wdtReset();
  
   // Return the response
   client.println("HTTP/1.1 200 OK");
@@ -103,7 +105,7 @@ void runWebServer()
 
     //change line
     client.println("<br><br>");
-    wdtReset();
+    //wdtReset();
   }
 
   wdtReset();
@@ -153,18 +155,11 @@ void runWebServer()
 
   client.println("<br><br>");
 
-  //Adjust Year
-  client.print("<b>EEPROM Year</b>");
-  client.print("<input type='number' inputmode='decimal' step='1' min='0' max '24' name='");
-  client.print(DOW_tagYear);
-  client.print("' value=");
-  client.print(currentYear+2000);
-  client.print(" style='position:absolute; left:151px; width:50px;'>");
-
   client.println("<br><br><br>");
 
   //Save/Cancel buttons
-  client.print("<input type=submit value=Save name=save'> <input type=submit value=Cancel name=cancel> <input type=submit value=Reboot name=restart></a>");
+  //client.print("<input type=submit value=Save name=save'> <input type=submit value=Cancel name=cancel> <input type=submit value=Reboot name=restart></a>");
+  client.print("<input type=submit value=Save name=save'> <input type=submit value=Cancel name=cancel> <input type=submit value=Resync name=resynch> <input type=submit value=Reboot name=restart>");
 
   client.println("</form>");
 
@@ -176,20 +171,57 @@ void runWebServer()
   client.print("<div style='position:absolute; text-indent: 0px; font-size:12px;'>Visit <a href = 'https://github.com/SupremeSports/NEO-Pixel-Clock' target='_blank' rel='noopener noreferrer'>GitHub</a> code repository</div><br>");
   client.print("<br>");
 
+  //System Date
+  client.print("<div style='position:absolute; text-indent: 0px; font-size:12px;'><b>System Date & Time:</b></div>");
+  client.print("<div style='position:absolute; text-indent: 151px; font-size:12px;'>");
+  client.print(Year);
+  client.print(Month<10 ? "/0" : "/");
+  client.print(Month);
+  client.print(Day<10 ? "/0" : "/");
+  client.print(Day);
+  client.print(Hour<10 ? " 0" : " ");
+  client.print(Hour);
+  client.print(Minute<10 ? ":0" : ":");
+  client.print(Minute);
+  client.print(Second<10 ? ":0" : ":");
+  client.print(Second);
+  client.print(" ");
+  client.print(DST ? "DST" : "EST");
+  client.print("</div><br>");
+
+  //Up Since Date
+  client.print("<div style='position:absolute; text-indent: 0px; font-size:12px;'><b>Up Since:</b></div>");
+  client.print("<div style='position:absolute; text-indent: 151px; font-size:12px;'>");
+  if (upSinceONS)
+  {
+    client.print(YearUp);
+    client.print(MonthUp<10 ? "/0" : "/");
+    client.print(MonthUp);
+    client.print(DayUp<10 ? "/0" : "/");
+    client.print(DayUp);
+    client.print(HourUp<10 ? " 0" : " ");
+    client.print(HourUp);
+    client.print(MinuteUp<10 ? ":0" : ":");
+    client.print(MinuteUp);
+    client.print(SecondUp<10 ? ":0" : ":");
+    client.print(SecondUp);
+    client.print(" ");
+    client.print(DSTUp ? "DST" : "EST");
+    client.print("</div><br><br>");
+  }
+  else
+    client.print("Time not synch'd yet...</div><br><br>");
+
+  //NeoClock IP
+  client.print("<div style='position:absolute; text-indent: 0px; font-size:12px;'><b>NeoClock IP:</b></div>");
+  client.print("<div style='position:absolute; text-indent: 151px; font-size:12px;'>");
+  client.print(WiFi.localIP());
+  client.print("</div><br>");
+
   //NTP Server
   client.print("<div style='position:absolute; text-indent: 0px; font-size:12px;'><b>NTP Server:</b></div>");
   client.print("<div style='position:absolute; text-indent: 151px; font-size:12px;'>");
   client.print(timeServer[wifiServerIndex]);
-  client.print("</div><br>");
-  
-  //System Date
-  client.print("<div style='position:absolute; text-indent: 0px; font-size:12px;'><b>System Date:</b></div>");
-  client.print("<div style='position:absolute; text-indent: 151px; font-size:12px;'>");
-  client.print(Year);
-  client.print("/");
-  client.print(Month);
-  client.print("/");
-  client.print(Day);
   client.print("</div><br>");
 
   //Version
@@ -199,7 +231,7 @@ void runWebServer()
   client.print("</div><br>");
 
   //Version Date
-  client.print("<div style='position:absolute; text-indent: 0px; font-size:12px;'><b>Last Update:</b></div>");
+  client.print("<div style='position:absolute; text-indent: 0px; font-size:12px;'><b>Version Date:</b></div>");
   client.print("<div style='position:absolute; text-indent: 151px; font-size:12px;'>");
   client.print(date);
   client.print("</div><br>");
@@ -252,19 +284,6 @@ void submit(String message)
   defaultFeature = newString.toInt();
   rainbowIndex = 0;
   displayFeature = defaultFeature;
-
-  //Adjust Year
-  pos1 = message.indexOf(DOW_tagYear) + DOW_tagYear.length();
-  pos2 = message.indexOf('&', pos1);
-  newString = message.substring(pos1 + 1, pos2);
-  uint16_t yearAdjust = newString.toInt();
-
-  if (yearAdjust-2000 != currentYear)
-  {
-    Year = yearAdjust;
-    currentYear = yearAdjust-2000;
-    localTimeValid = false;
-  }
 
   wdtReset();
   writeEEPROM();

@@ -35,8 +35,6 @@ void readEEPROM()
     wdtReset();
   }
 
-  currentYear = values[address_YEAR];
-
   Sprintln("Read EEPROM: ");
   for (int i=0; i<EEPROM_BYTES; i++)
     Sprintln(values[i]);
@@ -62,8 +60,6 @@ void writeEEPROM()
 
     wdtReset();
   }
-
-  values[address_YEAR] = currentYear;
 
   Sprintln("Write EEPROM: ");
   for (int i=0; i<EEPROM_BYTES; i++)

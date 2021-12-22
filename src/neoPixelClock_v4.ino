@@ -27,7 +27,7 @@ CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE G
 */
 
 /*
-  Name:		    NeoPixel Clock
+  Name:		    DO2 Control NeoPixel Clock
   Created:	  2019/02/28
   Author:     gauthier_j100@hotmail.com / SupremeSports
   GitHub:     https://github.com/SupremeSports/
@@ -36,13 +36,13 @@ CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE G
 /*
   ArduinoOTA            1.0.5
   ESP8266WiFi           1.0
-  NTPclient             3.2.0 //customized
+  NTPclient             1.3.2 // IMPORTANT - v1.x.x or older, v2 and v3 fails the clock
   Board                 Generic ESP8266 Module
   Board firmware        ESP8266 2.7.4
 */
 
-const char* version               = "v:4.7.0";
-const char* date                  = "2021/12/12";
+const char* version               = "v:5.2.1";
+const char* date                  = "2021/12/14";
 
 // ----------------------------------------------------------------------------------------------------
 // ----------------------------------------- ESP/WIFI DEFINES -----------------------------------------
@@ -127,7 +127,7 @@ bool PRE_5s                       = false;        //Comes on for the second befo
 
 #define EEPROM_SIZE                 64
 
-#define EEPROM_BYTES                18
+#define EEPROM_BYTES                17
 
 int address_ENB                   = 0;  //Days enabled (bitwise) / Bit 7=Always_ON
 int address_DEF                   = 1;  //Default sequence (radio buttons)
@@ -146,8 +146,6 @@ int address_FRI_S                 = 13;
 int address_FRI_E                 = 14;
 int address_SAT_S                 = 15;
 int address_SAT_E                 = 16;
-
-int address_YEAR                  = 17;
 
 // ----------------------------------------------------------------------------------------------------
 // ---------------------------------------- SPECIFIC DEFINES ------------------------------------------
@@ -233,7 +231,6 @@ bool colorAutoSwitch              = false;          //Displays are in auto color
 // ----------------------------------------------------------------------------------------------------
 WiFiServer server(80);
 
-
 String DOW_names[7]               = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 String DOW_tag[7]                 = {"sun_en", "mon_en", "tue_en", "wed_en", "thu_en", "fri_en", "sat_en"};
 String DOW_tagStart[7]            = {"sun_start", "mon_start", "tue_start", "wed_start", "thu_start", "fri_start", "sat_start"};
@@ -242,22 +239,23 @@ String DOW_tagStop[7]             = {"sun_stop", "mon_stop", "tue_stop", "wed_st
 String DOW_tagBrightness          = "bright";
 String DOW_tagColor               = "color";
 String DOW_tagAlwaysON            = "always";
-String DOW_tagYear                = "year";
 
 String DOW_tagColorNames[8]       = {"Blue", "Green", "Red", "Rainbow Cycle", "Color", "SPOON", "Vertical Rainbow", "Horizontal Rainbow"};
 
 const char* SAVE_BUTTON           = "save";
 const char* CANCEL_BUTTON         = "cancel";
+const char* RESYNCH_BUTTON        = "resynch";
 const char* RESTART_BUTTON        = "restart";
 
 // ----------------------------------------------------------------------------------------------------
 // ------------------------------------------ TIME CONTROL --------------------------------------------
 // ----------------------------------------------------------------------------------------------------
 #include <TimeLib.h>              //TimeLib library is needed https://github.com/PaulStoffregen/Time
-#include <NTPClient.h>            //Include NtpClient library header
+#include <NtpClientLib.h>         //Include NtpClient library header
 
-WiFiUDP ntpUDP;
-NTPClient NTP(ntpUDP);
+ntpClient *NTP;
+
+int maxRetryNTP                   = 5;
 
 //Variables
 uint16_t Year                     = initValue;
@@ -267,14 +265,23 @@ uint8_t Hour                      = initValue;
 uint8_t Minute                    = initValue;
 uint8_t Second                    = initValue;
 uint8_t DOW                       = initValue;
+bool DST                          = false;
+
+//Up since...
+uint16_t YearUp                   = initValue;
+uint8_t MonthUp                   = initValue;
+uint8_t DayUp                     = initValue;
+uint8_t HourUp                    = initValue;
+uint8_t MinuteUp                  = initValue;
+uint8_t SecondUp                  = initValue;
+bool DSTUp                        = false;
 
 uint8_t prevHour                  = initValue;
 uint8_t prevMinute                = initValue;
 uint8_t prevSecond                = initValue;
 
-uint8_t currentYear               = 2021;      //Save last 2 digits of year to validate NTP
-
 bool localTimeValid               = false;          //Detect that local time is valid
+bool upSinceONS                   = false;
 
 // ----------------------------------------------------------------------------------------------------
 // --------------------------------------------- SETUP ------------------------------------------------

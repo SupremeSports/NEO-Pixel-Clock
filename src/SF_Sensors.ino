@@ -197,3 +197,9 @@ float fahrenheitToCelsius(float fahrenheit)
 {
   return ((5.0/9.0) * (fahrenheit - 32));
 }
+
+//Custom map function required with ESPNTPClient.h library
+long Map(long x, long in_min, long in_max, long out_min, long out_max)
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}

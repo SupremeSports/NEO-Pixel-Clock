@@ -110,6 +110,8 @@ void initOTA()
     ArduinoOTA.onStart([]()
     {
       wdtReset();  //Keep feeding the dog while uploading data, otherwise it will reboot
+      timeDisplay.SetBrightness(Map(defaultBrightness,0,100,0,255));
+      timeDisplay.DisplayTextColor("FLSH", timeDisplay.Color(0, 255, 0));
       String type;
       if (ArduinoOTA.getCommand() == U_FLASH)
         type = "sketch";
@@ -188,7 +190,7 @@ void wdtReset()
 void local_yield()
 {
   yield();
-  wdtReset();
+  //wdtReset();
 }
 
 void local_delay(unsigned long millisecs)
